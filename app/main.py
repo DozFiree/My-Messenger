@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles  # ← ИМПОРТИРУЕМ ЭТО!
+from fastapi.staticfiles import StaticFiles  # ← ИМПОРТИРУЕМ ЭТО! # ← подчишай ЭТО!!!
 from fastapi.middleware.cors import CORSMiddleware
 import os
 import uvicorn
@@ -27,7 +27,7 @@ app.add_middleware(
 )
 
 # ПОДКЛЮЧАЕМ СТАТИЧЕСКИЕ ФАЙЛЫ (HTML, CSS, JS)
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Подключение API-роутеров
 app.include_router(router)
@@ -36,7 +36,7 @@ app.include_router(router)
 @app.get("/")
 def read_root():
     from fastapi.responses import FileResponse
-    return FileResponse("app/static/index.html")
+    return FileResponse("static/index.html")
 
 
 
@@ -46,4 +46,4 @@ def health_check():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
-    uvicorn.run("app.main:app", host="0.0.0.0", port=port, reload=True)
+    uvicorn.run("app.main:app", host="localhost", port=port, reload=True)  #"0.0.0.0" для запуска в сети
