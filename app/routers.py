@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Query, status
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import or_, and_, desc
+from sqlalchemy import or_, and_, desc, func
 from typing import List, Optional
 from datetime import datetime
 import os
@@ -176,10 +176,12 @@ def create_private_chat(
         raise HTTPException(status_code=400, detail="Cannot create chat with yourself")
 
     # Проверка существующего личного чата
+
     existing_chat = db.query(Chat).join(ChatParticipant).filter(
-        Chat.chat_type == ChatType.PRIVATE,
+        Chat.chat_type == ChatType.PRIVATE
+    ).filter(
         ChatParticipant.user_id.in_([current_user.id, target_user.id])
-    ).group_by(Chat.id).having(db.func.count(ChatParticipant.user_id) == 2).first()
+    ).group_by(Chat.id).having(func.count(ChatParticipant.id) == 2).first()
 
     if existing_chat:
         return {

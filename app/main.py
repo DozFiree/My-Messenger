@@ -1,3 +1,4 @@
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,7 +8,7 @@ import uvicorn
 from app.routers import router
 from app.database import create_tables, engine, Base
 
-
+load_dotenv()
 
 Base.metadata.create_all(bind=engine)
 
@@ -28,7 +29,7 @@ app.add_middleware(
 
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
-
+app.mount("/uploads", StaticFiles(directory="app/uploads"), name="uploads")
 
 app.include_router(router)
 
@@ -49,3 +50,8 @@ if __name__ == "__main__":
     uvicorn.run("app.main:app", host="0.0.0.0", port=port, reload=True)
 
 # python -m app.main
+# py -m app.main
+# http://localhost:8000
+## 192.168.5.107
+#py -m venv .venv
+#python -m venv .venv
