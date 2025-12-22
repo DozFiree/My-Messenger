@@ -3,150 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FireChat</title>
+    <title>DozFire's Messenger</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css"> <!-- Подключаем внешний CSS -->
-    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💬</text></svg>">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <!-- АВТОРИЗАЦИЯ -->
-    <div id="auth">
-        <div class="auth-container">
-            <div class="logo">
-                <h1><i class="fas fa-fire"></i> FireChat</h1>
-                <p>Быстрые и безопасные сообщения</p>
-            </div>
-
-            <div class="auth-content">
-                <div id="login-form" class="auth-form active">
-                    <div class="input-group">
-                        <label for="login-username">Имя пользователя</label>
-                        <input type="text" id="login-username" class="input-field" placeholder="Введите ваш логин">
-                    </div>
-                    <div class="input-group">
-                        <label for="login-password">Пароль</label>
-                        <input type="password" id="login-password" class="input-field" placeholder="Введите ваш пароль">
-                    </div>
-                    <button class="btn btn-primary" id="login-btn">
-                        <i class="fas fa-sign-in-alt"></i> Войти
-                    </button>
-                    <div class="auth-switch">
-                        Нет аккаунта? <a id="show-register">Зарегистрироваться</a>
-                    </div>
-                </div>
-
-                <div id="register-form" class="auth-form">
-                    <div class="input-group">
-                        <label for="register-username">Имя пользователя</label>
-                        <input type="text" id="register-username" class="input-field" placeholder="Придумайте логин">
-                    </div>
-                    <div class="input-group">
-                        <label for="register-email">Email</label>
-                        <input type="email" id="register-email" class="input-field" placeholder="your@email.com">
-                    </div>
-                    <div class="input-group">
-                        <label for="register-password">Пароль</label>
-                        <input type="password" id="register-password" class="input-field" placeholder="Не менее 6 символов">
-                    </div>
-                    <button class="btn btn-primary" id="register-btn">
-                        <i class="fas fa-user-plus"></i> Создать аккаунт
-                    </button>
-                    <div class="auth-switch">
-                        Уже есть аккаунт? <a id="show-login">Войти</a>
-                    </div>
-                </div>
+    <!-- Форма авторизации -->
+    <div id="auth-form">
+        <h1><i class="fas fa-comments"></i> DozFire's messenger</h1>
+        <div class="auth-input-group">
+            <input type="text" id="username" placeholder="Имя пользователя">
+        </div>
+        <div class="auth-input-group">
+            <input type="password" id="password" placeholder="Пароль">
+        </div>
+        <button class="btn" id="login-btn">
+            <i class="fas fa-sign-in-alt"></i> Войти
+        </button>
+        <button class="btn btn-secondary" id="register-btn">
+            Регистрация
+        </button>
+        <div id="register-fields" style="display:none; margin-top:1rem;">
+            <div class="auth-input-group">
+                <input type="email" id="email" placeholder="Email">
             </div>
         </div>
     </div>
 
-    <!-- ОСНОВНОЙ ИНТЕРФЕЙС -->
-    <div id="app">
-        <div class="app-container">
-            <!-- САЙДБАР -->
-            <div class="sidebar">
-                <div class="sidebar-header">
-                    <div class="user-info">
-                        <div class="user-avatar" id="user-avatar">U</div>
-                        <div class="user-details">
-                            <h3 id="username">Пользователь</h3>
-                            <p id="user-status">online</p>
-                        </div>
-                    </div>
-                    <div class="search-box">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="search-input" placeholder="Поиск чатов и сообщений...">
-                    </div>
-                </div>
+    <!-- Основной интерфейс чата -->
+    <div id="chat" style="display:none;">
+        <!-- Кнопка меню для мобильных -->
+        <button id="menu-toggle">
+            <i class="fas fa-bars"></i>
+        </button>
 
-                <div class="chats-list" id="chats-list">
-                    <!-- Чаты загружаются динамически -->
-                    <div class="empty-state">
-                        <i class="fas fa-comments"></i>
-                        <h3>Нет чатов</h3>
-                        <p>Начните новый диалог</p>
-                    </div>
-                </div>
-            </div>
+        <!-- Сайдбар -->
+        <div id="sidebar">
+            <h2><i class="fas fa-search"></i> Поиск</h2>
+            <input type="text" id="search" placeholder="Поиск пользователя...">
+            <ul id="user-list"></ul>
 
-            <!-- ОСНОВНОЙ ЧАТ -->
-            <div class="chat-area">
-                <div class="chat-header">
-                    <div class="chat-header-left">
-                        <button class="mobile-menu-btn" id="menu-toggle">
-                            <i class="fas fa-bars"></i>
-                        </button>
-                        <div id="chat-header-info" class="hidden">
-                            <div class="chat-avatar" id="chat-header-avatar">A</div>
-                            <div class="chat-header-details">
-                                <h3 id="chat-title">Анна</h3>
-                                <p id="chat-status">был(а) недавно</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="chat-actions">
-                        <button class="action-btn" title="Звонок">
-                            <i class="fas fa-phone"></i>
-                        </button>
-                        <button class="action-btn" title="Видеозвонок">
-                            <i class="fas fa-video"></i>
-                        </button>
-                        <button class="action-btn" title="Еще">
-                            <i class="fas fa-ellipsis-v"></i>
-                        </button>
-                    </div>
-                </div>
+            <h2><i class="fas fa-comments"></i> Чаты</h2>
+            <ul id="chat-list"></ul>
 
-                <!-- СООБЩЕНИЯ -->
-                <div class="messages-container" id="messages-container">
-                    <div id="no-chat-selected" class="empty-state">
-                        <i class="fas fa-comment-dots"></i>
-                        <h3>Выберите чат</h3>
-                        <p>Выберите диалог из списка слева</p>
-                    </div>
-                </div>
+            <h2><i class="fas fa-users"></i> Группы</h2>
+            <ul id="group-list"></ul>
 
-                <!-- ПОЛЕ ВВОДА -->
-                <div class="input-container" id="input-container" class="hidden">
-                    <div class="input-actions">
-                        <button class="input-action-btn" id="attach-btn" title="Прикрепить файл">
-                            <i class="fas fa-paperclip"></i>
-                        </button>
-                        <button class="input-action-btn" id="photo-btn" title="Сделать фото">
-                            <i class="fas fa-camera"></i>
-                        </button>
-                        <button class="input-action-btn" id="emoji-btn" title="Эмодзи">
-                            <i class="far fa-smile"></i>
-                        </button>
-                    </div>
-                    <div class="input-wrapper">
-                        <textarea class="message-input" id="message-input" placeholder="Сообщение..." rows="1"></textarea>
-                        <button class="send-btn" id="send-btn" title="Отправить">
-                            <i class="fas fa-paper-plane"></i>
+            <button id="create-group-btn" class="btn">
+                <i class="fas fa-plus"></i> Создать группу
+            </button>
+
+            <div style="padding: 1rem; border-top: 1px solid #333; margin-top: 1rem;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <img id="current-user-avatar" src="/static/img/default-avatar.png"
+                         style="width: 40px; height: 40px; border-radius: 50%;">
+                    <div>
+                        <div id="current-username" style="font-weight: bold;"></div>
+                        <button onclick="logout()" style="background: none; border: none; color: #00d4aa; cursor: pointer;">
+                            Выйти
                         </button>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Основная область чата -->
+        <div id="main-chat">
+            <!-- Заголовок чата -->
+            <div id="chat-header">
+                <img id="chat-avatar" src="/static/img/default-avatar.png"
+                     style="width: 50px; height: 50px; border-radius: 50%;">
+                <div class="chat-title" id="chat-title">Выберите чат</div>
+            </div>
+
+            <!-- Сообщения -->
+            <div id="messages">
+                <div style="text-align: center; padding: 2rem; color: #888;">
+                    Выберите чат для начала общения
+                </div>
+            </div>
+
+            <!-- Поле ввода -->
+            <div id="input-area">
+                <input type="text" id="message-input" placeholder="Напишите сообщение...">
+                <label for="file-input" class="btn-small" id="file-btn">
+                    <i class="fas fa-paperclip"></i>
+                </label>
+                <input type="file" id="file-input">
+                <button class="btn-small" id="send-btn">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
     </div>
-    </body>
+
+    <!-- Подключение JavaScript -->
+    <script src="/static/js/script.js"></script>
+</body>
 </html>
