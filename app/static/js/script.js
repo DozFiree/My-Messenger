@@ -1,121 +1,164 @@
 const API_BASE = '/api';
 let currentUser = null;
 let currentChatId = null;
-let currentChatType = null;
-let secretKey = 'mySecretKey123'; // В реальности это должен быть динамический ключ
-let messagePollingInterval = null;
 
-// Инициализация при загрузке страницы
-document.addEventListener('DOMContentLoaded', () => {
-    checkAuthStatus();
+// Инициализация
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Страница загружена');
+
+
+    console.log('login-btn:', document.getElementById('login-btn'));
+    console.log('register-btn:', document.getElementById('register-btn'));
+    console.log('show-register-btn:', document.getElementById('show-register-btn'));
+    console.log('show-login-btn:', document.getElementById('show-login-btn'));
+
     setupEventListeners();
+    checkAuthStatus();
 });
 
-// Проверка авторизации
-function checkAuthStatus() {
-    const token = localStorage.getItem('token');
-    if (token) {
-        // Проверяем токен через API
-        fetch(`${API_BASE}/users/me`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        })
-        .then(response => {
-            if (response.ok) {
-                return response.json();
-            }
-            throw new Error('Not authenticated');
-        })
-        .then(user => {
-            currentUser = user;
-            showChatInterface();
-            loadUserChats();
-            startMessagePolling();
-        })
-        .catch(() => {
-            localStorage.removeItem('token');
-            showAuthForm();
-        });
-    } else {
-        showAuthForm();
-    }
-}
-
-// Показать форму авторизации
-function showAuthForm() {
-    document.getElementById('auth-form').style.display = 'flex';
-    document.getElementById('chat').style.display = 'none';
-}
-
-// Показать интерфейс чата
-function showChatInterface() {
-    document.getElementById('auth-form').style.display = 'none';
-    document.getElementById('chat').style.display = 'flex';
-    document.getElementById('current-username').textContent = currentUser.username;
-}
-
-// Настройка обработчиков событий
 function setupEventListeners() {
-    // Авторизация
-    document.getElementById('login-btn').addEventListener('click', login);
-    document.getElementById('register-btn').addEventListener('click', register);
+    console.log('Настройка обработчиков...');
+
+    // Кнопки формы
+    const loginBtn = document.getElementById('login-btn');
+    const registerBtn = document.getElementById('register-btn');
+    const showRegisterBtn = document.getElementById('show-register-btn');
+    const showLoginBtn = document.getElementById('show-login-btn');
+
+    if (loginBtn) {
+        loginBtn.addEventListener('click', login);
+        console.log('Обработчик login добавлен');
+    }
+
+    if (registerBtn) {
+        registerBtn.addEventListener('click', register);
+        console.log('Обработчик register добавлен');
+    }
+
+    if (showRegisterBtn) {
+        showRegisterBtn.addEventListener('click', showRegisterForm);
+        console.log('Обработчик showRegisterForm добавлен');
+    }
+
+    if (showLoginBtn) {
+        showLoginBtn.addEventListener('click', showLoginForm);
+        console.log('Обработчик showLoginForm добавлен');
+    }
 
     // Поиск
-    document.getElementById('search').addEventListener('input', searchUsers);
+    const search = document.getElementById('search');
+    if (search) {
+        search.addEventListener('input', searchUsers);
+    }
 
     // Отправка сообщений
-    document.getElementById('send-btn').addEventListener('click', sendMessage);
-    document.getElementById('message-input').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            sendMessage();
-        }
-    });
+    const sendBtn = document.getElementById('send-btn');
+    if (sendBtn) {
+        sendBtn.addEventListener('click', sendMessage);
+    }
 
-    // Загрузка файлов
-    document.getElementById('file-btn').addEventListener('click', () => {
-        document.getElementById('file-input').click();
-    });
+    const messageInput = document.getElementById('message-input');
+    if (messageInput) {
+        messageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    }
 
-    document.getElementById('file-input').addEventListener('change', (e) => {
-        if (e.target.files[0]) {
-            sendMessage();
-        }
-    });
+    // Файлы
+    const fileBtn = document.getElementById('file-btn');
+    const fileInput = document.getElementById('file-input');
+    if (fileBtn && fileInput) {
+        fileBtn.addEventListener('click', function() {
+            fileInput.click();
+        });
+    }
 
-    // Создание группы
-    document.getElementById('create-group-btn').addEventListener('click', createGroup);
+    // Группа
+    const createGroupBtn = document.getElementById('create-group-btn');
+    if (createGroupBtn) {
+        createGroupBtn.addEventListener('click', createGroup);
+    }
 
-    // Переключение сайдбара (мобильная версия)
-    document.getElementById('menu-toggle').addEventListener('click', toggleSidebar);
-}
-
-// Шифрование/дешифрование
-function encrypt(text) {
-    return CryptoJS.AES.encrypt(text, secretKey).toString();
-}
-
-function decrypt(encrypted) {
-    try {
-        const bytes = CryptoJS.AES.decrypt(encrypted, secretKey);
-        return bytes.toString(CryptoJS.enc.Utf8) || '[Невозможно расшифровать]';
-    } catch (e) {
-        return '[Ошибка расшифровки]';
+    // Меню
+    const menuToggle = document.getElementById('menu-toggle');
+    if (menuToggle) {
+        menuToggle.addEventListener('click', toggleSidebar);
     }
 }
 
-// Вход в систему
-async function login() {
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
-
-    if (!username || !password) {
-        showNotification('Введите имя пользователя и пароль', 'error');
+// Проверка авторизации
+async function checkAuthStatus() {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        showAuthForm();
         return;
     }
 
     try {
+        const response = await fetch(`${API_BASE}/users/me`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            const user = await response.json();
+            currentUser = user;
+            showChatInterface();
+        } else {
+            localStorage.removeItem('token');
+            showAuthForm();
+        }
+    } catch (error) {
+        console.error('Auth error:', error);
+        showAuthForm();
+    }
+}
+
+function showAuthForm() {
+    document.getElementById('auth-form').style.display = 'block';
+    document.getElementById('chat').style.display = 'none';
+    showLoginForm();
+}
+
+function showLoginForm() {
+    document.getElementById('login-form').style.display = 'block';
+    document.getElementById('register-form').style.display = 'none';
+}
+
+function showRegisterForm() {
+    document.getElementById('login-form').style.display = 'none';
+    document.getElementById('register-form').style.display = 'block';
+}
+
+function showChatInterface() {
+    document.getElementById('auth-form').style.display = 'none';
+    document.getElementById('chat').style.display = 'flex';
+
+    if (currentUser) {
+        document.getElementById('current-username').textContent = currentUser.username;
+    }
+
+    loadUserChats();
+}
+
+// Вход
+async function login() {
+    console.log('Функция login вызвана');
+
+    const username = document.getElementById('login-username').value;
+    const password = document.getElementById('login-password').value;
+
+    if (!username || !password) {
+        alert('Введите имя пользователя и пароль');
+        return;
+    }
+
+    try {
+        console.log('Отправка запроса на вход...');
         const response = await fetch(`${API_BASE}/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -123,31 +166,38 @@ async function login() {
         });
 
         const data = await response.json();
+        console.log('Ответ:', data);
 
         if (response.ok) {
             localStorage.setItem('token', data.access_token);
             currentUser = data.user;
             showChatInterface();
-            loadUserChats();
-            startMessagePolling();
-            showNotification('Вход выполнен успешно!', 'success');
+            alert('Вход выполнен!');
         } else {
-            showNotification(data.detail || 'Ошибка входа', 'error');
+            alert(data.detail || 'Ошибка входа');
         }
     } catch (error) {
-        showNotification('Ошибка сети', 'error');
         console.error('Login error:', error);
+        alert('Ошибка сети');
     }
 }
 
 // Регистрация
 async function register() {
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
-    const email = document.getElementById('email').value;
+    console.log('Функция register вызвана');
 
-    if (!username || !password || !email) {
-        showNotification('Заполните все поля', 'error');
+    const username = document.getElementById('register-username').value;
+    const email = document.getElementById('register-email').value;
+    const password = document.getElementById('register-password').value;
+    const confirmPassword = document.getElementById('register-confirm-password').value;
+
+    if (!username || !email || !password || !confirmPassword) {
+        alert('Заполните все поля');
+        return;
+    }
+
+    if (password !== confirmPassword) {
+        alert('Пароли не совпадают');
         return;
     }
 
@@ -161,120 +211,19 @@ async function register() {
         const data = await response.json();
 
         if (response.ok) {
-            showNotification('Регистрация успешна! Теперь войдите', 'success');
-            document.getElementById('email').value = '';
+            alert('Регистрация успешна! Теперь войдите');
+            showLoginForm();
+            document.getElementById('login-username').value = username;
         } else {
-            showNotification(data.detail || 'Ошибка регистрации', 'error');
+            alert(data.detail || 'Ошибка регистрации');
         }
     } catch (error) {
-        showNotification('Ошибка сети', 'error');
         console.error('Register error:', error);
+        alert('Ошибка сети');
     }
 }
 
-// Поиск пользователей
-async function searchUsers() {
-    const query = document.getElementById('search').value;
-
-    if (query.length < 1) {
-        document.getElementById('user-list').innerHTML = '';
-        return;
-    }
-
-    try {
-        const token = localStorage.getItem('token');
-        const response = await fetch(`${API_BASE}/users/search?q=${encodeURIComponent(query)}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        if (response.ok) {
-            const users = await response.json();
-            displaySearchResults(users);
-        }
-    } catch (error) {
-        console.error('Search error:', error);
-    }
-}
-
-// Отображение результатов поиска
-function displaySearchResults(users) {
-    const userList = document.getElementById('user-list');
-    userList.innerHTML = '';
-
-    users.forEach(user => {
-        const li = document.createElement('li');
-        li.className = 'user-item';
-        li.innerHTML = `
-            <img src="${user.avatar_path || '/static/img/default-avatar.png'}"
-                 class="user-avatar"
-                 onerror="this.src='/static/img/default-avatar.png'">
-            <span>${user.username}</span>
-        `;
-        li.addEventListener('click', () => startPrivateChat(user));
-        userList.appendChild(li);
-    });
-}
-
-// Начать личный чат
-async function startPrivateChat(user) {
-    try {
-        const token = localStorage.getItem('token');
-        const response = await fetch(`${API_BASE}/chats/private`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ target_user_id: user.id })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            currentChatId = data.chat_id;
-            currentChatType = 'private';
-            loadChatMessages();
-            updateChatHeader(user.username, user.avatar_path);
-            toggleSidebar(); // Закрыть сайдбар на мобилке
-        }
-    } catch (error) {
-        console.error('Start chat error:', error);
-        showNotification('Ошибка создания чата', 'error');
-    }
-}
-
-// Создать групповой чат
-async function createGroup() {
-    const name = prompt('Введите название группы:');
-    if (!name) return;
-
-    // Здесь нужно добавить логику выбора участников
-    const user_ids = []; // Заполните ID выбранных пользователей
-
-    try {
-        const token = localStorage.getItem('token');
-        const response = await fetch(`${API_BASE}/chats/group`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ name, user_ids })
-        });
-
-        if (response.ok) {
-            showNotification('Группа создана', 'success');
-            loadUserChats();
-        }
-    } catch (error) {
-        console.error('Create group error:', error);
-        showNotification('Ошибка создания группы', 'error');
-    }
-}
-
-// Загрузка чатов пользователя
+// Загрузка чатов
 async function loadUserChats() {
     try {
         const token = localStorage.getItem('token');
@@ -293,76 +242,28 @@ async function loadUserChats() {
     }
 }
 
-// Отображение списка чатов
 function displayChats(chats) {
     const chatList = document.getElementById('chat-list');
     chatList.innerHTML = '';
 
     chats.forEach(chat => {
         const li = document.createElement('li');
-        li.className = 'chat-item';
-        li.dataset.chatId = chat.id;
-        li.dataset.chatType = chat.chat_type;
-
-        // Определяем название чата и аватар
-        let chatName = chat.chat_name;
-        let chatAvatar = chat.chat_avatar;
-
-        if (chat.chat_type === 'private') {
-            const otherUser = chat.participants.find(p => p.id !== currentUser.id);
-            if (otherUser) {
-                chatName = otherUser.username;
-                chatAvatar = otherUser.avatar_path;
-            }
-        }
-
-        li.innerHTML = `
-            <img src="${chatAvatar || '/static/img/default-avatar.png'}"
-                 class="user-avatar"
-                 onerror="this.src='/static/img/default-avatar.png'">
-            <div style="flex: 1;">
-                <div style="font-weight: bold;">${chatName}</div>
-                <div style="font-size: 0.9rem; opacity: 0.8;">
-                    ${chat.last_message ? decrypt(chat.last_message.content).substring(0, 30) + '...' : 'Нет сообщений'}
-                </div>
-            </div>
-            ${chat.unread_count > 0 ? `<span class="unread-badge">${chat.unread_count}</span>` : ''}
-        `;
-
-        li.addEventListener('click', () => selectChat(chat));
+        li.textContent = chat.chat_name || 'Чат';
+        li.style.cursor = 'pointer';
+        li.style.padding = '10px';
+        li.addEventListener('click', function() {
+            selectChat(chat);
+        });
         chatList.appendChild(li);
     });
 }
 
-// Выбор чата
 function selectChat(chat) {
     currentChatId = chat.id;
-    currentChatType = chat.chat_type;
-
-    // Определяем название для заголовка
-    let chatName = chat.chat_name;
-    let chatAvatar = chat.chat_avatar;
-
-    if (chat.chat_type === 'private') {
-        const otherUser = chat.participants.find(p => p.id !== currentUser.id);
-        if (otherUser) {
-            chatName = otherUser.username;
-            chatAvatar = otherUser.avatar_path;
-        }
-    }
-
-    updateChatHeader(chatName, chatAvatar);
+    document.getElementById('chat-title').textContent = chat.chat_name || 'Чат';
     loadChatMessages();
-    toggleSidebar(); // Закрыть сайдбар на мобилке
 }
 
-// Обновление заголовка чата
-function updateChatHeader(name, avatar) {
-    document.getElementById('chat-title').textContent = name;
-    document.getElementById('chat-avatar').src = avatar || '/static/img/default-avatar.png';
-}
-
-// Загрузка сообщений чата
 async function loadChatMessages() {
     if (!currentChatId) return;
 
@@ -383,64 +284,103 @@ async function loadChatMessages() {
     }
 }
 
-// Отображение сообщений
 function displayMessages(messages) {
     const messagesContainer = document.getElementById('messages');
     messagesContainer.innerHTML = '';
 
-    messages.forEach(message => {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${message.sender_id === currentUser.id ? 'sent' : 'received'}`;
-
-        const decryptedContent = decrypt(message.content);
-        const time = new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-        messageDiv.innerHTML = `
-            <div class="message-info">
-                <img src="${message.sender.avatar_path || '/static/img/default-avatar.png'}"
-                     class="message-sender-avatar"
-                     onerror="this.src='/static/img/default-avatar.png'">
-                <span>${message.sender.username}</span>
-                <span class="message-time">${time}</span>
-            </div>
-            <div class="message-content">${decryptedContent}</div>
-            ${message.file_path ?
-                `<a href="${message.file_path}" class="file-link" target="_blank">
-                    <i class="fas fa-download"></i> Скачать файл
-                </a>` : ''}
-        `;
-
-        messagesContainer.appendChild(messageDiv);
+    messages.forEach(msg => {
+        const div = document.createElement('div');
+        div.style.margin = '10px';
+        div.style.padding = '10px';
+        div.style.background = msg.sender_id === currentUser.id ? '#d1ecf1' : '#f8d7da';
+        div.textContent = `${msg.sender.username}: ${msg.content}`;
+        messagesContainer.appendChild(div);
     });
-
-    // Прокрутка вниз
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
-// Отправка сообщения
+async function searchUsers() {
+    const query = document.getElementById('search').value;
+    if (!query) return;
+
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_BASE}/users/search?q=${encodeURIComponent(query)}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            const users = await response.json();
+            displaySearchResults(users);
+        }
+    } catch (error) {
+        console.error('Search error:', error);
+    }
+}
+
+function displaySearchResults(users) {
+    const userList = document.getElementById('user-list');
+    userList.innerHTML = '';
+
+    users.forEach(user => {
+        const li = document.createElement('li');
+        li.textContent = user.username;
+        li.style.cursor = 'pointer';
+        li.style.padding = '10px';
+        li.addEventListener('click', function() {
+            startPrivateChat(user);
+        });
+        userList.appendChild(li);
+    });
+}
+
+async function startPrivateChat(user) {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_BASE}/chats/private`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ target_user_id: user.id })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            currentChatId = data.chat_id;
+            document.getElementById('chat-title').textContent = user.username;
+            loadChatMessages();
+        }
+    } catch (error) {
+        console.error('Start chat error:', error);
+        alert('Ошибка создания чата');
+    }
+}
+
 async function sendMessage() {
     if (!currentChatId) {
-        showNotification('Выберите чат для отправки сообщения', 'warning');
+        alert('Выберите чат');
         return;
     }
 
     const messageInput = document.getElementById('message-input');
-    const fileInput = document.getElementById('file-input');
     const content = messageInput.value.trim();
-    const file = fileInput.files[0];
 
-    if (!content && !file) return;
+    if (!content) {
+        alert('Введите сообщение');
+        return;
+    }
 
     const formData = new FormData();
     formData.append('chat_id', currentChatId);
+    formData.append('content', content);
 
-    if (content) {
-        const encryptedContent = encrypt(content);
-        formData.append('content', encryptedContent);
-    }
-
-    if (file) {
-        formData.append('file', file);
+    const fileInput = document.getElementById('file-input');
+    if (fileInput.files[0]) {
+        formData.append('file', fileInput.files[0]);
     }
 
     try {
@@ -457,68 +397,57 @@ async function sendMessage() {
             messageInput.value = '';
             fileInput.value = '';
             loadChatMessages();
-        } else {
-            showNotification('Ошибка отправки сообщения', 'error');
         }
     } catch (error) {
-        console.error('Send message error:', error);
-        showNotification('Ошибка сети', 'error');
+        console.error('Send error:', error);
+        alert('Ошибка отправки');
     }
 }
 
-// Опрос новых сообщений
-function startMessagePolling() {
-    if (messagePollingInterval) {
-        clearInterval(messagePollingInterval);
-    }
+async function createGroup() {
+    const name = prompt('Название группы:');
+    if (!name) return;
 
-    messagePollingInterval = setInterval(() => {
-        if (currentChatId) {
-            loadChatMessages();
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_BASE}/chats/group`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ name, user_ids: [currentUser.id] })
+        });
+
+        if (response.ok) {
+            alert('Группа создана');
+            loadUserChats();
         }
-        loadUserChats(); // Обновляем список чатов для счетчиков непрочитанных
-    }, 5000); // Каждые 5 секунд
+    } catch (error) {
+        console.error('Create group error:', error);
+        alert('Ошибка создания группы');
+    }
 }
 
-// Показать уведомление
-function showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-    notification.textContent = message;
-
-    document.body.appendChild(notification);
-
-    setTimeout(() => {
-        notification.remove();
-    }, 3000);
-}
-
-// Переключение сайдбара (мобильная версия)
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
-    sidebar.classList.toggle('open');
+    sidebar.style.display = sidebar.style.display === 'none' ? 'block' : 'none';
 }
 
-// Выход из системы
 function logout() {
     localStorage.removeItem('token');
     currentUser = null;
     currentChatId = null;
-
-    if (messagePollingInterval) {
-        clearInterval(messagePollingInterval);
-        messagePollingInterval = null;
-    }
-
     showAuthForm();
-    showNotification('Вы вышли из системы', 'info');
 }
 
-// Экспорт функций для HTML
+
 window.login = login;
 window.register = register;
-window.searchUser = searchUsers;
+window.logout = logout;
+window.showLoginForm = showLoginForm;
+window.showRegisterForm = showRegisterForm;
+window.searchUsers = searchUsers;
 window.sendMessage = sendMessage;
 window.createGroup = createGroup;
 window.toggleSidebar = toggleSidebar;
-window.logout = logout;

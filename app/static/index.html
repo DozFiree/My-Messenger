@@ -4,101 +4,82 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DozFire's Messenger</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 </head>
 <body>
-    <!-- Форма авторизации -->
+
     <div id="auth-form">
-        <h1><i class="fas fa-comments"></i> DozFire's messenger</h1>
-        <div class="auth-input-group">
-            <input type="text" id="username" placeholder="Имя пользователя">
-        </div>
-        <div class="auth-input-group">
-            <input type="password" id="password" placeholder="Пароль">
-        </div>
-        <button class="btn" id="login-btn">
-            <i class="fas fa-sign-in-alt"></i> Войти
-        </button>
-        <button class="btn btn-secondary" id="register-btn">
-            Регистрация
-        </button>
-        <div id="register-fields" style="display:none; margin-top:1rem;">
-            <div class="auth-input-group">
-                <input type="email" id="email" placeholder="Email">
+        <h1>DozFire's Chat</h1>
+
+
+        <div id="login-form">
+            <div>
+                <input type="text" id="login-username" placeholder="Имя пользователя">
             </div>
+            <div>
+                <input type="password" id="login-password" placeholder="Пароль">
+            </div>
+            <button id="login-btn">Войти</button>
+            <button id="show-register-btn">Регистрация</button>
+        </div>
+
+
+        <div id="register-form" style="display:none;">
+            <div>
+                <input type="text" id="register-username" placeholder="Ваше имя">
+            </div>
+            <div>
+                <input type="email" id="register-email" placeholder="Email">
+            </div>
+            <div>
+                <input type="password" id="register-password" placeholder="Пароль">
+            </div>
+            <div>
+                <input type="password" id="register-confirm-password" placeholder="Подтверждение пароля">
+            </div>
+            <button id="register-btn">Зарегистрироваться</button>
+            <button id="show-login-btn">Назад ко входу</button>
         </div>
     </div>
 
-    <!-- Основной интерфейс чата -->
-    <div id="chat" style="display:none;">
-        <!-- Кнопка меню для мобильных -->
-        <button id="menu-toggle">
-            <i class="fas fa-bars"></i>
-        </button>
 
-        <!-- Сайдбар -->
+    <div id="chat" style="display:none;">
+        <button id="menu-toggle">☰</button>
+
         <div id="sidebar">
-            <h2><i class="fas fa-search"></i> Поиск</h2>
             <input type="text" id="search" placeholder="Поиск пользователя...">
             <ul id="user-list"></ul>
 
-            <h2><i class="fas fa-comments"></i> Чаты</h2>
+            <h3>Чаты</h3>
             <ul id="chat-list"></ul>
 
-            <h2><i class="fas fa-users"></i> Группы</h2>
-            <ul id="group-list"></ul>
+            <button id="create-group-btn">Создать группу</button>
 
-            <button id="create-group-btn" class="btn">
-                <i class="fas fa-plus"></i> Создать группу
-            </button>
-
-            <div style="padding: 1rem; border-top: 1px solid #333; margin-top: 1rem;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <img id="current-user-avatar" src="/static/img/default-avatar.png"
-                         style="width: 40px; height: 40px; border-radius: 50%;">
-                    <div>
-                        <div id="current-username" style="font-weight: bold;"></div>
-                        <button onclick="logout()" style="background: none; border: none; color: #00d4aa; cursor: pointer;">
-                            Выйти
-                        </button>
-                    </div>
-                </div>
+            <div>
+                <span id="current-username"></span>
+                <button onclick="logout()">Выйти</button>
             </div>
         </div>
 
-        <!-- Основная область чата -->
         <div id="main-chat">
-            <!-- Заголовок чата -->
             <div id="chat-header">
-                <img id="chat-avatar" src="/static/img/default-avatar.png"
-                     style="width: 50px; height: 50px; border-radius: 50%;">
-                <div class="chat-title" id="chat-title">Выберите чат</div>
+                <div id="chat-title">Выберите чат</div>
             </div>
 
-            <!-- Сообщения -->
             <div id="messages">
-                <div style="text-align: center; padding: 2rem; color: #888;">
-                    Выберите чат для начала общения
-                </div>
+                <p>Выберите чат для начала общения</p>
             </div>
 
-            <!-- Поле ввода -->
             <div id="input-area">
-                <input type="text" id="message-input" placeholder="Напишите сообщение...">
-                <label for="file-input" class="btn-small" id="file-btn">
-                    <i class="fas fa-paperclip"></i>
-                </label>
-                <input type="file" id="file-input">
-                <button class="btn-small" id="send-btn">
-                    <i class="fas fa-paper-plane"></i>
-                </button>
+                <textarea id="message-input" placeholder="Сообщение..."></textarea>
+                <input type="file" id="file-input" style="display:none">
+                <button id="file-btn">📎</button>
+                <button id="send-btn">Отправить</button>
             </div>
         </div>
     </div>
 
-    <!-- Подключение JavaScript -->
     <script src="/static/js/script.js"></script>
 </body>
 </html>
