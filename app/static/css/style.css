@@ -1358,8 +1358,9 @@ body::before {
 
 /* Стили для аватаров в списке пользователей */
 .user-item img.user-avatar {
-    width: 40px;
-    height: 40px;
+
+    width: 5px;
+    height: 5px;
     border-radius: 50%;
     object-fit: cover;
     border: 2px solid var(--card-border);
@@ -1673,4 +1674,83 @@ button, input, textarea, select, .btn, .user-item, .chat-item {
         overflow: visible;
         height: auto;
     }
+}
+.loader-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+}
+
+.loader {
+    border: 3px solid rgba(0, 212, 170, 0.1);
+    border-top: 3px solid var(--primary-color);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+.loader-text {
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+/* Сообщения об ошибках */
+.error-message {
+    text-align: center;
+    padding: 2rem;
+    color: var(--danger);
+}
+
+.error-message i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.7;
+}
+
+.error-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.error-details {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    max-width: 300px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.btn-retry, .btn-test {
+    margin: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.btn-retry {
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-retry:hover {
+    background: var(--primary-dark);
+}
+
+.btn-test {
+    background: var(--secondary-color);
+    color: white;
+}
+
+.btn-test:hover {
+    background: #5a6268;
 }

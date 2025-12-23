@@ -268,6 +268,8 @@ def create_group_chat(
     }
 
 
+
+
 # Получение списка чатов пользователя
 @router.get("/chats", response_model=List[ChatResponse])
 def get_user_chats(
